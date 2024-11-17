@@ -57,6 +57,7 @@ The app has at least two pages: "Play" and "Stats"
 
 - The "Stats" page displays some stats about playing like the number of games played, the average number of guesses per game. 
 - The "Stats" page displays a bar chart showing he number of guesses for each game
+
 Stability and Usability:
 
 - The app works and does not crash, even for malformed input
@@ -83,4 +84,3 @@ Implement the following improvements:
 
 The app is able to estimate the quality of guesses
 The estimated guessing qualiy if presented on the stats page in an interesting and transparent way to the user
-
