@@ -5,7 +5,7 @@ st.set_page_config(
     page_icon="👋",
 )
 
-st.write("# Welcome to **Who's That Pokémon?**, an AI-powered interactive guessing game! 👋")
+st.write("# Welcome to Who's That Pokémon? An AI-powered interactive guessing game! 👋")
 
 st.sidebar.success("Select a page above.")
 

@@ -1,8 +1,8 @@
-# Who's That Pokémon? - A Streamlit & AI Guessing Game 🎮
+# Who's That Pokémon? - A Streamlit & AI Guessing Game
 
-Welcome to **Who's That Pokémon?**, an interactive guessing game built with [Streamlit](https://streamlit.io/) and powered by [OpenAI's GPT](https://platform.openai.com/). The objective is simple: guess the name of a Pokémon based on hints provided by the AI assistant. You can [play the game here!](https://ai-guessing-game-gitfoe.streamlit.app/)
+Welcome to **Who's That Pokémon?** An interactive guessing game built with [Streamlit](https://streamlit.io/) and powered by [OpenAI's GPT](https://platform.openai.com/)! The objective is simple: guess the name of a Pokémon based on hints provided by the AI assistant. You can [play the game here!](https://ai-guessing-game-gitfoe.streamlit.app/)
 
-![Demo Screenshot](data/play_screenshot.png) <!-- Add a path to a screenshot of your game if available -->
+![Demo Screenshot](data/play_screenshot.png)
 
 ## Features
 

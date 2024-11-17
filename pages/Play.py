@@ -41,7 +41,7 @@ def pick_random_pokemon():
 #region Helper functions
 def reset_session_state():
     """Resets the current to guess Pokémon and accompanying variables"""
-    st.session_state["messages"] = [{"role": "assistant", "content": "Please guess the Pokémon!"}]
+    st.session_state["messages"] = [{"role": "assistant", "content": "Please start with guessing the Pokémon! You can ask me anything, but try to ask clever questions!"}]
     st.session_state["selected_pokemon"] = pick_random_pokemon()
     st.session_state["game_over"] = False
     st.session_state["current_game_guesses"] = 0
