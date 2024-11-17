@@ -4,7 +4,7 @@ from openai import OpenAI
 
 # Define the sidebar text
 with st.sidebar:
-    openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
+    st.session_state["openai_api_key"] = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
     "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
     "[View the source code](https://github.com/Gitfoe/ai-guessing-game/)"
 
@@ -35,7 +35,7 @@ def reset_session_state():
 
 def get_system_prompt():
     """Returns the most recent system prompt for OpenAI based on the current session state."""
-    selected_pokemon = st.session_state["selected_pokemon"]
+    mon = st.session_state["selected_pokemon"]
     return f"""
     You are an intelligent and engaging assistant in a "Who's that Pokémon?" guessing game.
     The player is trying to guess the name of a Pokémon based on your hints. 
@@ -45,16 +45,15 @@ def get_system_prompt():
     If the user names the correct Pokémon, start your response with "Correct!".
     If the user names an incorrect Pokémon, start your response with "Incorrect!".
     Here are the attributes of the Pokémon:
-    - Name: {selected_pokemon['name']}
-    - Pokedex Number: {selected_pokemon['pokedex_number']}
-    - Type(s): {selected_pokemon['type1']}, {selected_pokemon['type2']}
-    - Classification: {selected_pokemon['classification']}
-    - Height: {selected_pokemon['height_m']} m
-    - Weight: {selected_pokemon['weight_kg']} kg
-    - Abilities: {selected_pokemon['abilities']}
-    - Base Stats: HP {selected_pokemon['hp']}, Attack {selected_pokemon['attack']}, Defense {selected_pokemon['defense']}, Special Attack {selected_pokemon['sp_attack']}, Special Defense {selected_pokemon['sp_defense']}, Speed {selected_pokemon['speed']}
-    - Generation: {selected_pokemon['generation']}
-    - Legendary: {'Yes' if selected_pokemon['is_legendary'] else 'No'}
+    - Name: {mon['name']}
+    - Type(s): {mon['type1']}, {mon['type2']}
+    - Classification: {mon['classification']}
+    - Height: {mon['height_m']} m
+    - Weight: {mon['weight_kg']} kg
+    - Abilities: {mon['abilities']}
+    - Base Stats: {mon['hp']} HP, {mon['attack']} Attack, {mon['defense']} Defense, {mon['sp_attack']} Special Attack, {mon['sp_defense']} Special Defense, {mon['speed']} Speed
+    - Generation: {mon['generation']}
+    - Legendary: {'Yes' if mon['is_legendary'] else 'No'}
     """
 #endregion
 
@@ -79,21 +78,21 @@ def correct_guess():
 # Obtain a prompt from the user
 if prompt := st.chat_input():
     # Check if OpenAI API Key is provided, prompt the user if not
-    if not openai_api_key:
+    if not st.session_state["openai_api_key"]:
         st.info("Please add your OpenAI API key to continue.")
         st.stop()
     # Create the OpenAI client if it doesn't exist yet
     elif openai_client is None:
-        openai_client = OpenAI(api_key=openai_api_key)
+        openai_client = OpenAI(api_key=st.session_state["openai_api_key"])
     
     # Add the user's guess to the chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
 
     # Check if the user guessed the correct Pokémon exactly
-    pokemon = st.session_state["selected_pokemon"]
-    if prompt.lower() == pokemon["name"].lower():
-        msg = f"Correct! It's {pokemon['name']}!"
+    mon = st.session_state["selected_pokemon"]
+    if prompt.lower() == mon["name"].lower():
+        msg = f"Correct! It's {mon['name']}!"
         correct_guess()
     # If not, send the more complex prompt to OpenAI
     else:
