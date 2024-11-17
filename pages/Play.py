@@ -33,8 +33,8 @@ def reset_session_state():
     st.session_state["current_game_guesses"] = 0
     st.session_state["current_game_hints"] = 0
 
-    # Write selected Pokémon to screen (temporarily for debugging)
-    st.dataframe(st.session_state["selected_pokemon"])
+    # Write selected Pokémon to screen (for debugging)
+    #st.dataframe(st.session_state["selected_pokemon"])
 
 def correct_guess():
     """Sets session variables for when the user guessed correctly"""
@@ -101,9 +101,41 @@ def get_judge_prompt():
 
     Here is the chat history:
     {st.session_state["messages"]}
+
+    Here is the amount of guesses and hints:
+    - Guesses: {st.session_state["current_game_guesses"]}
+    - Hints: {st.session_state["current_game_hints"]}
     
     Respond in the following format, omitting the chevron icons: <rating from 1 to 10>: <brief explanation of your evaluation>
     """
+#endregion
+
+#region Persistent Storage
+import json
+import os
+
+SAVE_FILE_PATH = "data/session_state.json"
+
+def save_session_state():
+    """Save the current session state to a JSON file."""
+    data = {
+        "guesses_per_completed_game": st.session_state.get("guesses_per_completed_game", []),
+        "hints_per_completed_game": st.session_state.get("hints_per_completed_game", []),
+        "judge_ratings_per_game": st.session_state.get("judge_ratings_per_game", []),
+        "judge_explanations_per_game": st.session_state.get("judge_explanations_per_game", [])
+    }
+    with open(SAVE_FILE_PATH, "w") as file:
+        json.dump(data, file)
+
+def load_session_state():
+    """Load the session state from a JSON file if available."""
+    if os.path.exists(SAVE_FILE_PATH):
+        with open(SAVE_FILE_PATH, "r") as file:
+            data = json.load(file)
+            st.session_state["guesses_per_completed_game"] = data.get("guesses_per_completed_game", [])
+            st.session_state["hints_per_completed_game"] = data.get("hints_per_completed_game", [])
+            st.session_state["judge_ratings_per_game"] = data.get("judge_ratings_per_game", [])
+            st.session_state["judge_explanations_per_game"] = data.get("judge_explanations_per_game", [])
 #endregion
 
 # Initialize the session state
@@ -113,6 +145,7 @@ if "messages" not in st.session_state:
     st.session_state["hints_per_completed_game"] = []
     st.session_state["judge_ratings_per_game"] = []
     st.session_state["judge_explanations_per_game"] = []
+    load_session_state() # Load saved session state if available
 
 # Write messages to the chat
 for msg in st.session_state.messages:
@@ -166,7 +199,7 @@ if prompt := st.chat_input(disabled=st.session_state["game_over"]):
     
     # End the game if guessed correctly
     if st.session_state["game_over"]:
-        st.success("Congratulations! You've finished this round. You can continue playing and guess a new Pokémon if you want!")
+        # Add the guesses and hints to the completed games
         st.session_state["guesses_per_completed_game"].append(st.session_state["current_game_guesses"])
         st.session_state["hints_per_completed_game"].append(st.session_state["current_game_hints"])
 
@@ -191,5 +224,6 @@ if prompt := st.chat_input(disabled=st.session_state["game_over"]):
         st.session_state["judge_ratings_per_game"].append(rating)
         st.session_state["judge_explanations_per_game"].append(explanation)
 
-        game_over_check()
+        game_over_check() # Check if the game is over and show a button
+        save_session_state() # Save session state to JSON
         st.rerun() # Rerun so that the chat_input() will be rendered disabled
