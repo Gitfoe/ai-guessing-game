@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from openai import OpenAI
-import random
 
 # Start the app locally by executing the command: streamlit run ai_app.py
 
@@ -42,12 +41,12 @@ st.dataframe(selected_pokemon)
 system_prompt = f"""
 You are an intelligent and engaging assistant in a "Who's that Pokémon?" guessing game.
 The player is trying to guess the name of a Pokémon based on your hints. 
-You know everything about the Pokémon, but you should not directly reveal its name.
-You can answer questions about its attributes.
-If the player guesses incorrectly, guide them towards the correct answer.
-Here are the details of the Pokémon you have to provide hints for:
+You know everything about the Pokémon and its attributes, but you should not directly reveal its name.
+The user may ask you questions or hints, but only reveal one attribute at a time.
+When giving the user information about the Pokémon, start your response with "Hint:"
+If the user names the correct Pokémon, start your response with "Correct!".
+Here are the attributes of the Pokémon:
 - Name: {selected_pokemon['name']}
-- Japanese Name: {selected_pokemon['japanese_name']}
 - Pokedex Number: {selected_pokemon['pokedex_number']}
 - Type(s): {selected_pokemon['type1']}, {selected_pokemon['type2']}
 - Classification: {selected_pokemon['classification']}
@@ -77,14 +76,14 @@ if prompt := st.chat_input():
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
 
-    # Check if the user's guess is correct
+    # Check if the user guessed the correct Pokémon exactly
     if prompt.lower() == selected_pokemon["name"].lower():
+        msg += f"\n🎉 Right! It's {selected_pokemon['name']}! You're a Pokémon Master! 🎉"
         st.session_state["game_over"] = True
-        msg = f"Right! It's {selected_pokemon['name']}! You're a master."
+    # If not, send the more complex prompt to OpenAI
     else:
-        # Send the conversation history and Pokémon data to OpenAI for generating a response
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_prompt},
                 *st.session_state.messages,
@@ -92,6 +91,10 @@ if prompt := st.chat_input():
         )
         msg = response.choices[0].message.content
 
+        # Check if OpenAI's response indicates a correct guess
+        if msg.strip().lower().startswith("correct"):
+            st.session_state["game_over"] = True
+    
     # Add assistant's message to the chat history and write it
     st.session_state.messages.append({"role": "assistant", "content": msg})
     st.chat_message("assistant").write(msg)
@@ -101,4 +104,4 @@ if prompt := st.chat_input():
         st.success("Congratulations! Restart the game to play again.")
         if st.button("Play Again"):
             st.session_state.clear()
-            st.rerun()
+            st.experimental_rerun()
