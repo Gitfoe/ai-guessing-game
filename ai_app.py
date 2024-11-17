@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from openai import OpenAI
+import random
 
 # Start the app locally by executing the command: streamlit run ai_app.py
 
@@ -10,12 +11,9 @@ def load_pokemon_data():
     return pd.read_csv('data/pokemon.csv')
 pokemon_data = load_pokemon_data()
 
-# Write data to the screen (temporarily for debugging)
-st.write(pokemon_data)
-
 # Define the sidebar text
 with st.sidebar:
-    openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password") # Ask for an OpenAPI key
+    openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
     "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
     "[View the source code](https://github.com/Gitfoe/ai-guessing-game/)"
 
@@ -26,7 +24,6 @@ st.title("💬 Who's that Pokémon?")
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "assistant", "content": "Please guess the Pokémon!"}]
     st.session_state["selected_pokemon"] = None
-    st.session_state["hints_given"] = 0
     st.session_state["game_over"] = False
 
 # Function to pick a random Pokémon
@@ -39,30 +36,32 @@ if st.session_state["selected_pokemon"] is None:
 selected_pokemon = st.session_state["selected_pokemon"]
 
 # Write selected Pokémon to screen (temporarily for debugging)
-st.write(selected_pokemon)
+st.dataframe(selected_pokemon)
 
-# Function to generate hints based on the Pokémon attributes
-def generate_hint(hint_number, pokemon):
-    hints = [
-        f"This Pokémon belongs to Generation {pokemon['generation']}.",
-        f"Its primary type is {pokemon['type1']}." + (f" and secondary type is {pokemon['type2']}." if not pd.isna(pokemon['type2']) else ""),
-        f"It has an ability like {pokemon['abilities'].split(',')[0]}.",
-        f"Its classification is '{pokemon['classification']}'.",
-        f"The Pokémon is {'Legendary' if pokemon['is_legendary'] else 'not Legendary'}.",
-        f"It has a base HP of {pokemon['hp']}, Attack of {pokemon['attack']}, and Speed of {pokemon['speed']}.",
-    ]
-    return hints[hint_number] if hint_number < len(hints) else "No more hints available!"
+# System prompt for OpenAI
+system_prompt = f"""
+You are an intelligent and engaging assistant in a "Who's that Pokémon?" guessing game.
+The player is trying to guess the name of a Pokémon based on your hints. 
+You know everything about the Pokémon, but you should not directly reveal its name.
+You can answer questions about its attributes.
+If the player guesses incorrectly, guide them towards the correct answer.
+Here are the details of the Pokémon you have to provide hints for:
+- Name: {selected_pokemon['name']}
+- Japanese Name: {selected_pokemon['japanese_name']}
+- Pokedex Number: {selected_pokemon['pokedex_number']}
+- Type(s): {selected_pokemon['type1']}, {selected_pokemon['type2']}
+- Classification: {selected_pokemon['classification']}
+- Height: {selected_pokemon['height_m']} m
+- Weight: {selected_pokemon['weight_kg']} kg
+- Abilities: {selected_pokemon['abilities']}
+- Base Stats: HP {selected_pokemon['hp']}, Attack {selected_pokemon['attack']}, Defense {selected_pokemon['defense']}, Special Attack {selected_pokemon['sp_attack']}, Special Defense {selected_pokemon['sp_defense']}, Speed {selected_pokemon['speed']}
+- Generation: {selected_pokemon['generation']}
+- Legendary: {'Yes' if selected_pokemon['is_legendary'] else 'No'}
+"""
 
 # Write new messages to the chat
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
-
-# Define prompts
-system_prompt = """
-You are an intelligent and engaging assistant in a "Who's that Pokémon?" guessing game.
-Your role is to help the player guess the name of a randomly selected Pokémon by providing clues and responding to their questions.
-Your responses should be friendly, encouraging, and informative, but avoid directly revealing the Pokémon's name. Here are your guidelines:
-"""
 
 # Obtain a prompt from the user
 if prompt := st.chat_input():
@@ -83,21 +82,12 @@ if prompt := st.chat_input():
         st.session_state["game_over"] = True
         msg = f"Right! It's {selected_pokemon['name']}! You're a master."
     else:
-        # Provide hints or ask OpenAI for a response
-        hint_message = ""
-        if st.session_state["hints_given"] < 5:
-            hint_message = generate_hint(st.session_state["hints_given"], selected_pokemon)
-            st.session_state["hints_given"] += 1
-        else:
-            hint_message = "Try again or type 'I give up' to reveal the answer."
-        
-        # Use OpenAI to create a response based on the hint
+        # Send the conversation history and Pokémon data to OpenAI for generating a response
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": system_prompt},
                 *st.session_state.messages,
-                {"role": "assistant", "content": hint_message}
             ]
         )
         msg = response.choices[0].message.content
@@ -111,4 +101,4 @@ if prompt := st.chat_input():
         st.success("Congratulations! Restart the game to play again.")
         if st.button("Play Again"):
             st.session_state.clear()
-            st.experimental_rerun()
+            st.rerun()
