@@ -30,6 +30,9 @@ def reset_session_state():
     st.session_state["current_game_guesses"] = 0
     st.session_state["current_game_hints"] = 0
 
+    # Write selected Pokémon to screen (temporarily for debugging)
+    st.dataframe(st.session_state["selected_pokemon"])
+
 def get_system_prompt():
     """Returns the most recent system prompt for OpenAI based on the current session state."""
     selected_pokemon = st.session_state["selected_pokemon"]
@@ -61,8 +64,8 @@ if "messages" not in st.session_state:
     st.session_state["guesses_per_completed_game"] = []
     st.session_state["hints_per_completed_game"] = []
 
-# Write selected Pokémon to screen (temporarily for debugging)
-st.dataframe(st.session_state["selected_pokemon"])
+# Initialise empty variables
+openai_client = None
 
 # Write messages to the chat
 for msg in st.session_state.messages:
@@ -79,9 +82,9 @@ if prompt := st.chat_input():
     if not openai_api_key:
         st.info("Please add your OpenAI API key to continue.")
         st.stop()
-
-    # Create the OpenAI client
-    client = OpenAI(api_key=openai_api_key)
+    # Create the OpenAI client if it doesn't exist yet
+    elif openai_client is None:
+        openai_client = OpenAI(api_key=openai_api_key)
     
     # Add the user's guess to the chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -94,7 +97,7 @@ if prompt := st.chat_input():
         correct_guess()
     # If not, send the more complex prompt to OpenAI
     else:
-        response = client.chat.completions.create(
+        response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": get_system_prompt()},
@@ -108,7 +111,7 @@ if prompt := st.chat_input():
             correct_guess()
         elif msg.strip().lower().startswith("incorrect"):
             st.session_state["current_game_guesses"] += 1
-        elif msg.strip().lower().startswith("hint"):
+        elif "hint:" in msg.strip().lower():
             st.session_state["current_game_hints"] += 1
     
     # Add assistant's message to the chat history and write it
@@ -124,5 +127,5 @@ if prompt := st.chat_input():
         # Debug
         st.write(st.session_state)
 
-        if st.button("Play Again"):
-            reset_session_state()
+        # Display button and prepare for new game once clicked
+        st.button("Play Again", on_click=reset_session_state)
