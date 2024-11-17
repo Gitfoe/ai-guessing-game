@@ -4,9 +4,10 @@ from openai import OpenAI
 
 # Define the sidebar text
 with st.sidebar:
-    st.session_state["openai_api_key"] = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
+    st.session_state["openai_api_key"] = st.text_input("OpenAI API Key", type="password", value=st.session_state.get("openai_api_key", ""))
     "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
     "[View the source code](https://github.com/Gitfoe/ai-guessing-game/)"
+    st.write(st.session_state)
 
 # Set the Streamlit page title
 st.title("💬 Who's that Pokémon?")

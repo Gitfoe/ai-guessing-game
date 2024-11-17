@@ -22,12 +22,13 @@ else:
     col2.metric(label="Total Guesses", value=total_guesses)
     col3.metric(label="Total Hints", value=total_hints)
     
-    # Display Bar Chart for guesses
-    st.write("#### Guesses per Game")
-    guesses_df = pd.DataFrame({"Game Number": range(1, total_games + 1), "Guesses": guesses})
-    st.bar_chart(guesses_df.set_index("Game Number")["Guesses"])
-
-    # Display Bar Chart for hints
-    st.write("#### Hints per Game")
-    hints_df = pd.DataFrame({"Game Number": range(1, total_games + 1), "Hints": hints})
-    st.bar_chart(hints_df.set_index("Game Number")["Hints"])
+    # Merge guesses and hints into a single DataFrame for plotting
+    stats_df = pd.DataFrame({
+        "Game Number": range(1, total_games + 1),
+        "Guesses": guesses,
+        "Hints": hints
+    })
+    
+    # Display a line chart with two lines for guesses and hints
+    st.subheader("Guesses and Hints per Game")
+    st.line_chart(stats_df.set_index("Game Number"))
